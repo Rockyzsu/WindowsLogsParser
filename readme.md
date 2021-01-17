@@ -9,3 +9,5 @@
 > python windwos_log_parse.py 
 
 [![syQxoD.md.png](https://s3.ax1x.com/2021/01/18/syQxoD.md.png)](https://imgchr.com/i/syQxoD)
+
+> if no ip and address, it means some local service that needed to be used for calling system logon.
