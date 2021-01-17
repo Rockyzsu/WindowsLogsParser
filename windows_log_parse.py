@@ -1,4 +1,8 @@
 # windows日志分析
+'''
+author: rocky chen
+公众号：可转债量化分析
+'''
 import mmap
 import contextlib
 from Evtx.Evtx import FileHeader
@@ -11,7 +15,7 @@ class WindowsLogger():
 
     def __init__(self, path):
         self.path = path
-        self.formator = 'IP:{:10}\tlocation:{:20}\tUser:{:15}\tProcess:{}'
+        self.formator = 'Date:{:10}\tIP:{}\tPort:{}\tlocation:{:20}\tUser:{:15}\tProcess:{}'
 
     def read_file(self):
         with open(self.path, 'r') as f:
@@ -28,12 +32,12 @@ class WindowsLogger():
                 for xml, record in evtx_file_xml_view(fh):
                     # 只输出事件ID为4624的内容
                     # InterestEvent(xml,4624)
-                    for IpAddress, ip, targetUsername, ProcessName in self.filter_event(xml, filteID):
+                    for time_create,IpAddress, ip, IpPort,targetUsername, ProcessName in self.filter_event(xml, filteID):
                         self.printer(
-                            IpAddress, ip, targetUsername, ProcessName)
+                            time_create,IpAddress, IpPort,ip, targetUsername, ProcessName)
 
-    def printer(self, IpAddress, ip, targetUsername, ProcessName):
-        print(self.formator.format(IpAddress, ip, targetUsername, ProcessName))
+    def printer(self, time_create,IpAddress, ip, IpPort,targetUsername, ProcessName):
+        print(self.formator.format(time_create,IpAddress, ip, IpPort,targetUsername, ProcessName))
 
     # 过滤掉不需要的事件，输出感兴趣的事件
     def filter_event(self, xml, EventID, use_filter=True):
@@ -49,6 +53,8 @@ class WindowsLogger():
             for data in eventData.getElementsByTagName('Data'):
                 if data.getAttribute('Name') == 'IpAddress':
                     IpAddress = data.childNodes[0].data
+                if data.getAttribute('Name') == 'IpPort':
+                    IpPort = data.childNodes[0].data
 
                 if data.getAttribute('Name') == 'TargetUserName':
                     targetUsername = data.childNodes[0].data
@@ -61,13 +67,15 @@ class WindowsLogger():
                 if re.search('^\d+', IpAddress):
                     ip = IP(IpAddress).ip_address
 
-                yield IpAddress, ip, targetUsername, ProcessName
+                yield time_create,IpAddress, ip, IpPort,targetUsername, ProcessName
 
 
 def main():
-    
-    path = r'D:\share\1.evtx'
-    filter_id = '4624'
+    # evtx file path
+    path = r'D:\share\failed.evtx'
+    # filter idd
+    filter_id = '4625'
+
     app = WindowsLogger(path)
     app.parse_log_detail(filter_id)
 
